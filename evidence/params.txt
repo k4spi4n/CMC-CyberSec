@@ -1,0 +1,5 @@
+Bộ tham số ML-DSA (FIPS 204, Table 1 & 2)
+           Cat  (k,l) eta tau  gamma1  gamma2 omega    pk    sk   sig
+ML-DSA-44    2  (4,4)   2  39  131072   95232    80  1312  2560  2420
+ML-DSA-65    3  (6,5)   4  49  524288  261888    55  1952  4032  3309
+ML-DSA-87    5  (8,7)   2  60  524288  261888    75  2592  4896  4627

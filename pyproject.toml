@@ -1,0 +1,13 @@
+[project]
+name = "mldsa-app"
+version = "1.0.0"
+description = "Post-quantum document signing demo with ML-DSA (NIST FIPS 204)"
+requires-python = ">=3.10"
+dependencies = ["cryptography>=48", "flask>=3"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "dilithium-py>=1.4"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

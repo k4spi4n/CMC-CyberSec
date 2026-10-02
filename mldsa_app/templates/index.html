@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ML-DSA Signer</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1d2330; --muted: #5f6b7d; --line: #dde2ea;
+    --accent: #2754c5; --ok: #1d7a46; --ok-bg: #e5f5ec; --bad: #b42318; --bad-bg: #fdecea;
+    --code: #f0f2f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151b; --card: #1b1f27; --text: #e6e9ef; --muted: #98a2b3; --line: #2c3340;
+      --accent: #7c9dff; --ok: #5fd08f; --ok-bg: #16301f; --bad: #ff7b72; --bad-bg: #3a1a19;
+      --code: #232833;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .step { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--accent);
+          color: var(--card); text-align: center; font-size: 13px; line-height: 22px; margin-right: 6px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input, select, textarea { width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px;
+          background: var(--bg); color: var(--text); font: inherit; }
+  textarea { font: 12px/1.4 ui-monospace, Consolas, monospace; resize: vertical; }
+  button { margin-top: 12px; padding: 7px 14px; border: 1px solid var(--accent); background: var(--accent);
+           color: var(--card); border-radius: 6px; font: inherit; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--accent); }
+  button.danger { border-color: var(--bad); background: transparent; color: var(--bad); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  .table-wrap { overflow-x: auto; }
+  .key { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 13px; }
+  .key code, .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12px; word-break: break-all; }
+  .muted { color: var(--muted); }
+  .result { margin-top: 12px; padding: 12px; border-radius: 8px; font-weight: 600; display: none; }
+  .result.ok { display: block; background: var(--ok-bg); color: var(--ok); }
+  .result.bad { display: block; background: var(--bad-bg); color: var(--bad); }
+  .err { color: var(--bad); font-size: 13px; min-height: 1em; margin-top: 6px; }
+  .span2 { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ký tài liệu hậu lượng tử với ML-DSA</h1>
+  <p class="sub">NIST FIPS 204 · Module-Lattice-Based Digital Signature · thư viện <span class="mono">pyca/cryptography</span> (OpenSSL)</p>
+
+  <div class="grid">
+    <section class="card span2">
+      <h2>Bộ tham số (FIPS 204, Table 1 &amp; 2)</h2>
+      <div class="table-wrap"><table>
+        <tr><th>Tham số</th><th>Category</th><th>(k, l)</th><th>η</th><th>τ</th><th>γ₁</th><th>ω</th><th>pk (B)</th><th>sk (B)</th><th>chữ ký (B)</th></tr>
+        {% for p in params %}
+        <tr><td>{{ p.name }}</td><td>{{ p.security_category }}</td><td>({{ p.k }}, {{ p.l }})</td><td>{{ p.eta }}</td>
+            <td>{{ p.tau }}</td><td>2<sup>{{ p.gamma1.bit_length() - 1 }}</sup></td><td>{{ p.omega }}</td>
+            <td>{{ p.pk_bytes }}</td><td>{{ p.sk_bytes }}</td><td>{{ p.sig_bytes }}</td></tr>
+        {% endfor %}
+      </table></div>
+      <p class="muted" style="font-size:13px;margin:8px 0 0">So sánh: ECDSA P-256 có pk 65 B và chữ ký ~70 B, nhưng bị thuật toán Shor phá trên máy tính lượng tử.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">1</span>Sinh cặp khóa</h2>
+      <div class="row">
+        <div><label for="kg-label">Tên</label><input id="kg-label" value="Alice"></div>
+        <div><label for="kg-alg">Bộ tham số</label>
+          <select id="kg-alg">{% for p in params %}<option {{ 'selected' if p.name == 'ML-DSA-65' }}>{{ p.name }}</option>{% endfor %}</select></div>
+      </div>
+      <button id="kg-btn">Sinh khóa</button>
+      <div class="err" id="kg-err"></div>
+      <div id="keyring"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">2</span>Ký</h2>
+      <label for="sg-key">Khóa bí mật</label><select id="sg-key"></select>
+      <label for="sg-text">Văn bản</label>
+      <textarea id="sg-text" rows="3">Bên A chuyển cho bên B 100.000.000 VND.</textarea>
+      <label for="sg-file">hoặc tệp (ưu tiên nếu chọn)</label><input type="file" id="sg-file">
+      <label for="sg-ctx">Context string (≤ 255 byte)</label><input id="sg-ctx" value="{{ default_ctx }}">
+      <button id="sg-btn">Ký</button>
+      <div class="err" id="sg-err"></div>
+    </section>
+
+    <section class="card span2">
+      <h2><span class="step">3</span>Xác minh &amp; thử tấn công</h2>
+      <div class="grid">
+        <div>
+          <label for="vf-key">Khóa công khai của người ký</label><select id="vf-key"></select>
+          <label for="vf-text">Văn bản nhận được</label><textarea id="vf-text" rows="3"></textarea>
+          <label for="vf-file">hoặc tệp nhận được</label><input type="file" id="vf-file">
+          <label for="vf-ctx">Context mong đợi</label><input id="vf-ctx" value="{{ default_ctx }}">
+        </div>
+        <div>
+          <label for="vf-bundle">Tệp chữ ký (.sig.json)</label><textarea id="vf-bundle" rows="11"></textarea>
+        </div>
+      </div>
+      <div class="row" style="flex:none">
+        <button id="vf-btn" style="flex:none">Xác minh</button>
+        <button class="danger" style="flex:none" id="t-msg">Sửa 1 ký tự văn bản</button>
+        <button class="danger" style="flex:none" id="t-sig">Lật 1 bit chữ ký</button>
+        <button class="danger" style="flex:none" id="t-ctx">Đổi context</button>
+        <button class="ghost" style="flex:none" id="t-dl">Tải .sig.json</button>
+      </div>
+      <div class="result" id="vf-result"></div>
+      <div class="err" id="vf-err"></div>
+    </section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let keys = [];
+
+async function post(url, fields) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(fields)) if (v !== undefined && v !== null) fd.append(k, v);
+  const r = await fetch(url, { method: "POST", body: fd });
+  const body = await r.json();
+  if (!r.ok) throw new Error(body.error || r.statusText);
+  return body;
+}
+
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+function renderKeys() {
+  const ring = $("keyring"); ring.textContent = "";
+  for (const sel of [$("sg-key"), $("vf-key")]) {
+    const prev = sel.value; sel.textContent = "";
+    for (const k of keys) sel.add(new Option(`${k.label} (${k.alg})`, k.label));
+    if (keys.some(k => k.label === prev)) sel.value = prev;
+  }
+  for (const k of keys) {
+    const div = document.createElement("div"); div.className = "key";
+    const title = document.createElement("strong"); title.textContent = `${k.label} · ${k.alg} · category ${k.category}`;
+    const fp = document.createElement("div"); fp.className = "muted";
+    fp.append("SHA3-256(pk): "); const c = document.createElement("code"); c.textContent = k.fingerprint.slice(0, 32) + "…"; fp.append(c);
+    const sizes = document.createElement("div"); sizes.className = "muted";
+    sizes.textContent = `pk ${k.pk_bytes} B · chữ ký ${k.sig_bytes} B · sk lưu dạng seed 32 B`;
+    const row = document.createElement("div"); row.className = "row"; row.style.flex = "none";
+    const b1 = document.createElement("button"); b1.className = "ghost"; b1.textContent = "Tải pk (.pem)";
+    b1.onclick = () => download(`${k.label}.pub.pem`, k.public_pem);
+    const b2 = document.createElement("button"); b2.className = "ghost"; b2.textContent = "Xuất sk (mã hóa)";
+    b2.onclick = async () => {
+      const pw = prompt("Mật khẩu bảo vệ khóa bí mật (≥ 8 ký tự):");
+      if (!pw) return;
+      try { download(`${k.label}.key.pem`, (await post("/api/export", { label: k.label, password: pw })).pem); }
+      catch (e) { $("kg-err").textContent = e.message; }
+    };
+    row.append(b1, b2);
+    div.append(title, fp, sizes, row); ring.append(div);
+  }
+}
+
+async function loadKeys() { keys = await (await fetch("/api/keys")).json(); renderKeys(); }
+
+$("kg-btn").onclick = async () => {
+  $("kg-err").textContent = "";
+  try { await post("/api/keygen", { label: $("kg-label").value, alg: $("kg-alg").value }); await loadKeys(); }
+  catch (e) { $("kg-err").textContent = e.message; }
+};
+
+$("sg-btn").onclick = async () => {
+  $("sg-err").textContent = "";
+  try {
+    const f = $("sg-file").files[0];
+    const bundle = await post("/api/sign", { label: $("sg-key").value, text: $("sg-text").value,
+                                             file: f, context: $("sg-ctx").value });
+    $("vf-bundle").value = JSON.stringify(bundle, null, 2);
+    $("vf-text").value = $("sg-text").value;
+    $("vf-key").value = $("sg-key").value;
+    $("vf-result").className = "result";
+  } catch (e) { $("sg-err").textContent = e.message; }
+};
+
+$("vf-btn").onclick = async () => {
+  $("vf-err").textContent = "";
+  const res = $("vf-result");
+  try {
+    const r = await post("/api/verify", { label: $("vf-key").value, text: $("vf-text").value,
+              file: $("vf-file").files[0], context: $("vf-ctx").value, bundle: $("vf-bundle").value });
+    res.className = "result " + (r.ok ? "ok" : "bad");
+    res.textContent = (r.ok ? "✔ " : "✘ ") + r.reason + (r.alg ? ` — ${r.alg}` : "");
+  } catch (e) { res.className = "result"; $("vf-err").textContent = e.message; }
+};
+
+$("t-msg").onclick = () => {
+  const t = $("vf-text").value;
+  if (!t) return;
+  const i = t.search(/\d/) >= 0 ? t.search(/\d/) : 0;
+  const ch = t[i] === "9" ? "1" : (/\d/.test(t[i]) ? "9" : (t[i] === "X" ? "Y" : "X"));
+  $("vf-text").value = t.slice(0, i) + ch + t.slice(i + 1);
+};
+
+$("t-sig").onclick = () => {
+  try {
+    const b = JSON.parse($("vf-bundle").value);
+    const raw = Uint8Array.from(atob(b.signature_b64), c => c.charCodeAt(0));
+    const i = Math.floor(Math.random() * raw.length);
+    raw[i] ^= 1 << Math.floor(Math.random() * 8);
+    b.signature_b64 = btoa(String.fromCharCode(...raw));
+    $("vf-bundle").value = JSON.stringify(b, null, 2);
+    $("vf-err").textContent = `Đã lật 1 bit ở byte ${i}/${raw.length}`;
+  } catch { $("vf-err").textContent = "Chưa có chữ ký hợp lệ để sửa"; }
+};
+
+$("t-ctx").onclick = () => { $("vf-ctx").value = "CMC-CyberSec/payment/v1"; };
+
+$("t-dl").onclick = () => {
+  try { const b = JSON.parse($("vf-bundle").value); download(`${b.file_name || "message"}.sig.json`, $("vf-bundle").value); }
+  catch { $("vf-err").textContent = "Chưa có chữ ký"; }
+};
+
+loadKeys();
+</script>
+</body>
+</html>
