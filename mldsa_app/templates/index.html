@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -54,65 +54,65 @@
 </head>
 <body>
 <main>
-  <h1>Ký tài liệu hậu lượng tử với ML-DSA</h1>
-  <p class="sub">NIST FIPS 204 · Module-Lattice-Based Digital Signature · thư viện <span class="mono">pyca/cryptography</span> (OpenSSL)</p>
+  <h1>Post-quantum document signing with ML-DSA</h1>
+  <p class="sub">NIST FIPS 204 · Module-Lattice-Based Digital Signature · library <span class="mono">pyca/cryptography</span> (OpenSSL)</p>
 
   <div class="grid">
     <section class="card span2">
-      <h2>Bộ tham số (FIPS 204, Table 1 &amp; 2)</h2>
+      <h2>Parameter sets (FIPS 204, Table 1 &amp; 2)</h2>
       <div class="table-wrap"><table>
-        <tr><th>Tham số</th><th>Category</th><th>(k, l)</th><th>η</th><th>τ</th><th>γ₁</th><th>ω</th><th>pk (B)</th><th>sk (B)</th><th>chữ ký (B)</th></tr>
+        <tr><th>Parameter set</th><th>Category</th><th>(k, l)</th><th>η</th><th>τ</th><th>γ₁</th><th>ω</th><th>pk (B)</th><th>sk (B)</th><th>signature (B)</th></tr>
         {% for p in params %}
         <tr><td>{{ p.name }}</td><td>{{ p.security_category }}</td><td>({{ p.k }}, {{ p.l }})</td><td>{{ p.eta }}</td>
             <td>{{ p.tau }}</td><td>2<sup>{{ p.gamma1.bit_length() - 1 }}</sup></td><td>{{ p.omega }}</td>
             <td>{{ p.pk_bytes }}</td><td>{{ p.sk_bytes }}</td><td>{{ p.sig_bytes }}</td></tr>
         {% endfor %}
       </table></div>
-      <p class="muted" style="font-size:13px;margin:8px 0 0">So sánh: ECDSA P-256 có pk 65 B và chữ ký ~70 B, nhưng bị thuật toán Shor phá trên máy tính lượng tử.</p>
+      <p class="muted" style="font-size:13px;margin:8px 0 0">For comparison: ECDSA P-256 has a 65 B public key and a ~70 B signature, but Shor's algorithm breaks it on a quantum computer.</p>
     </section>
 
     <section class="card">
-      <h2><span class="step">1</span>Sinh cặp khóa</h2>
+      <h2><span class="step">1</span>Generate a key pair</h2>
       <div class="row">
-        <div><label for="kg-label">Tên</label><input id="kg-label" value="Alice"></div>
-        <div><label for="kg-alg">Bộ tham số</label>
+        <div><label for="kg-label">Name</label><input id="kg-label" value="Alice"></div>
+        <div><label for="kg-alg">Parameter set</label>
           <select id="kg-alg">{% for p in params %}<option {{ 'selected' if p.name == 'ML-DSA-65' }}>{{ p.name }}</option>{% endfor %}</select></div>
       </div>
-      <button id="kg-btn">Sinh khóa</button>
+      <button id="kg-btn">Generate key</button>
       <div class="err" id="kg-err"></div>
       <div id="keyring"></div>
     </section>
 
     <section class="card">
-      <h2><span class="step">2</span>Ký</h2>
-      <label for="sg-key">Khóa bí mật</label><select id="sg-key"></select>
-      <label for="sg-text">Văn bản</label>
-      <textarea id="sg-text" rows="3">Bên A chuyển cho bên B 100.000.000 VND.</textarea>
-      <label for="sg-file">hoặc tệp (ưu tiên nếu chọn)</label><input type="file" id="sg-file">
-      <label for="sg-ctx">Context string (≤ 255 byte)</label><input id="sg-ctx" value="{{ default_ctx }}">
-      <button id="sg-btn">Ký</button>
+      <h2><span class="step">2</span>Sign</h2>
+      <label for="sg-key">Private key</label><select id="sg-key"></select>
+      <label for="sg-text">Text</label>
+      <textarea id="sg-text" rows="3">Party A transfers 100,000,000 VND to Party B.</textarea>
+      <label for="sg-file">or a file (takes priority if chosen)</label><input type="file" id="sg-file">
+      <label for="sg-ctx">Context string (≤ 255 bytes)</label><input id="sg-ctx" value="{{ default_ctx }}">
+      <button id="sg-btn">Sign</button>
       <div class="err" id="sg-err"></div>
     </section>
 
     <section class="card span2">
-      <h2><span class="step">3</span>Xác minh &amp; thử tấn công</h2>
+      <h2><span class="step">3</span>Verify &amp; try attacks</h2>
       <div class="grid">
         <div>
-          <label for="vf-key">Khóa công khai của người ký</label><select id="vf-key"></select>
-          <label for="vf-text">Văn bản nhận được</label><textarea id="vf-text" rows="3"></textarea>
-          <label for="vf-file">hoặc tệp nhận được</label><input type="file" id="vf-file">
-          <label for="vf-ctx">Context mong đợi</label><input id="vf-ctx" value="{{ default_ctx }}">
+          <label for="vf-key">Signer's public key</label><select id="vf-key"></select>
+          <label for="vf-text">Received text</label><textarea id="vf-text" rows="3"></textarea>
+          <label for="vf-file">or received file</label><input type="file" id="vf-file">
+          <label for="vf-ctx">Expected context</label><input id="vf-ctx" value="{{ default_ctx }}">
         </div>
         <div>
-          <label for="vf-bundle">Tệp chữ ký (.sig.json)</label><textarea id="vf-bundle" rows="11"></textarea>
+          <label for="vf-bundle">Signature file (.sig.json)</label><textarea id="vf-bundle" rows="11"></textarea>
         </div>
       </div>
       <div class="row" style="flex:none">
-        <button id="vf-btn" style="flex:none">Xác minh</button>
-        <button class="danger" style="flex:none" id="t-msg">Sửa 1 ký tự văn bản</button>
-        <button class="danger" style="flex:none" id="t-sig">Lật 1 bit chữ ký</button>
-        <button class="danger" style="flex:none" id="t-ctx">Đổi context</button>
-        <button class="ghost" style="flex:none" id="t-dl">Tải .sig.json</button>
+        <button id="vf-btn" style="flex:none">Verify</button>
+        <button class="danger" style="flex:none" id="t-msg">Change 1 character</button>
+        <button class="danger" style="flex:none" id="t-sig">Flip 1 signature bit</button>
+        <button class="danger" style="flex:none" id="t-ctx">Change context</button>
+        <button class="ghost" style="flex:none" id="t-dl">Download .sig.json</button>
       </div>
       <div class="result" id="vf-result"></div>
       <div class="err" id="vf-err"></div>
@@ -151,13 +151,13 @@ function renderKeys() {
     const fp = document.createElement("div"); fp.className = "muted";
     fp.append("SHA3-256(pk): "); const c = document.createElement("code"); c.textContent = k.fingerprint.slice(0, 32) + "…"; fp.append(c);
     const sizes = document.createElement("div"); sizes.className = "muted";
-    sizes.textContent = `pk ${k.pk_bytes} B · chữ ký ${k.sig_bytes} B · sk lưu dạng seed 32 B`;
+    sizes.textContent = `pk ${k.pk_bytes} B · signature ${k.sig_bytes} B · sk stored as a 32 B seed`;
     const row = document.createElement("div"); row.className = "row"; row.style.flex = "none";
-    const b1 = document.createElement("button"); b1.className = "ghost"; b1.textContent = "Tải pk (.pem)";
+    const b1 = document.createElement("button"); b1.className = "ghost"; b1.textContent = "Download pk (.pem)";
     b1.onclick = () => download(`${k.label}.pub.pem`, k.public_pem);
-    const b2 = document.createElement("button"); b2.className = "ghost"; b2.textContent = "Xuất sk (mã hóa)";
+    const b2 = document.createElement("button"); b2.className = "ghost"; b2.textContent = "Export sk (encrypted)";
     b2.onclick = async () => {
-      const pw = prompt("Mật khẩu bảo vệ khóa bí mật (≥ 8 ký tự):");
+      const pw = prompt("Password to protect the private key (≥ 8 characters):");
       if (!pw) return;
       try { download(`${k.label}.key.pem`, (await post("/api/export", { label: k.label, password: pw })).pem); }
       catch (e) { $("kg-err").textContent = e.message; }
@@ -215,15 +215,15 @@ $("t-sig").onclick = () => {
     raw[i] ^= 1 << Math.floor(Math.random() * 8);
     b.signature_b64 = btoa(String.fromCharCode(...raw));
     $("vf-bundle").value = JSON.stringify(b, null, 2);
-    $("vf-err").textContent = `Đã lật 1 bit ở byte ${i}/${raw.length}`;
-  } catch { $("vf-err").textContent = "Chưa có chữ ký hợp lệ để sửa"; }
+    $("vf-err").textContent = `Flipped 1 bit in byte ${i}/${raw.length}`;
+  } catch { $("vf-err").textContent = "No valid signature to modify yet"; }
 };
 
 $("t-ctx").onclick = () => { $("vf-ctx").value = "CMC-CyberSec/payment/v1"; };
 
 $("t-dl").onclick = () => {
   try { const b = JSON.parse($("vf-bundle").value); download(`${b.file_name || "message"}.sig.json`, $("vf-bundle").value); }
-  catch { $("vf-err").textContent = "Chưa có chữ ký"; }
+  catch { $("vf-err").textContent = "No signature yet"; }
 };
 
 loadKeys();

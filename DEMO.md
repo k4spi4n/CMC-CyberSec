@@ -1,28 +1,52 @@
-# Kịch bản demo (8–10 phút)
+# Demo script (8–10 minutes)
 
-Chuẩn bị trước: mở sẵn 2 terminal ở thư mục dự án, chạy `.venv\Scripts\python -m mldsa_app.web` và mở http://127.0.0.1:5000. Mở sẵn `REPORT.md` ở mục 3 (bảng đối chiếu).
+Before you start: open 2 terminals in the project folder, run `.venv\Scripts\python -m mldsa_app.web` and open http://127.0.0.1:5000. Keep `REPORT.md` section 3 (the compliance table) open.
 
-Slide: https://claude.ai/artifact/VDWUhcERMNMzVvmRcMSZ5R. Phúc trình bày slide 1–6, Bình slide 7–10, Luân slide 11–14, Duy slide 15–18.
+Slides: https://claude.ai/artifact/VDWUhcERMNMzVvmRcMSZ5R. Phúc presents slides 1–7, Bình slides 8–11, Luân slides 12–15, Duy slides 16–19. Each slide has speaker notes in English.
 
-| Phút | Người trình bày | Nội dung | Thao tác |
+| Time | Speaker | Content | Action |
 |---|---|---|---|
-| 0:00–1:30 | Vũ Hoàng Phúc | **Vấn đề:** máy tính lượng tử dùng thuật toán Shor phá RSA/ECDSA. Kịch bản "thu bây giờ, giả mạo sau" với hợp đồng có hiệu lực dài hạn. NIST chuẩn hóa ML-DSA (FIPS 204, 08/2024). Ý tưởng chính: MLWE, Fiat–Shamir with aborts, SUF-CMA | Slide hoặc REPORT §1.1–1.3 |
-| 1:30–2:30 | Vũ Hoàng Phúc | **Tham số:** 3 bộ 44/65/87, ứng với category 2/3/5. Vì sao chọn 65 | `python -m mldsa_app info` |
-| 2:30–5:00 | Đặng Thái Bình | **Web demo:** (1) sinh khóa Alice, ML-DSA-65, chỉ ra pk 1952 B. (2) Ký "Bên A chuyển 100.000.000 VND". (3) Xác minh: **xanh**. (4) Bấm *Sửa 1 ký tự*: **đỏ**. (5) Ký lại, bấm *Lật 1 bit chữ ký*: **đỏ**. (6) Ký lại, bấm *Đổi context*: **đỏ**. (7) Sinh khóa Mallory, ký bằng Mallory nhưng xác minh bằng pk Alice: **đỏ** | Trình duyệt |
-| 5:00–6:00 | Đặng Thái Bình | **Kịch bản đầy đủ trên CLI:** hedged signing (2 chữ ký khác nhau, đều hợp lệ), tấn công sửa metadata context, tệp rỗng, tệp 20 MiB ký theo luồng | `python -m mldsa_app demo` |
-| 6:00–7:30 | Trần Vũ Luân | **Đối chiếu chuẩn:** đi qua bảng R1–R14. Nhấn mạnh 165 vector NIST ACVP và test đối chiếu chéo với dilithium-py | `python -m pytest -q` (≈ 2 giây) + REPORT §3 |
-| 7:30–8:30 | Trần Vũ Luân | **Hiệu năng và đánh đổi:** ML-DSA nhanh, nhưng chữ ký lớn hơn ECDSA khoảng 47 lần | `python -m mldsa_app bench -n 20` |
-| 8:30–9:30 | Đinh Thế Duy | **AI usage:** prompt, cách kiểm chứng (introspect API, đọc PDF gốc, vector NIST), các lỗi AI đã sửa. **Hạn chế:** không có PKI, không có timestamp, web giữ khóa trong RAM | AI_USAGE.md, REPORT §6 |
+| 0:00–1:30 | Vũ Hoàng Phúc | **The problem:** a quantum computer running Shor's algorithm breaks RSA/ECDSA. Long-lived signatures (contracts, firmware) are at risk. NIST standardized ML-DSA (FIPS 204, Aug 2024) | Slides 1–4 |
+| 1:30–2:30 | Vũ Hoàng Phúc | **How it works:** equations with noise (LWE), commit → challenge → answer, retry if the answer could leak the secret. 3 parameter sets, why ML-DSA-65 | Slides 5–7, `python -m mldsa_app info` |
+| 2:30–5:00 | Đặng Thái Bình | **Web demo** (see below) | Browser, slide 11 as backup |
+| 5:00–6:00 | Đặng Thái Bình | **Full CLI scenario:** hedged signing, rewritten-context attack, empty file, 20 MiB file | `python -m mldsa_app demo` |
+| 6:00–7:30 | Trần Vũ Luân | **Proof:** 165/165 NIST ACVP vectors, cross-check with dilithium-py, rule → code → proof table | `python -m pytest -q` (~1 s) + slides 12–14 |
+| 7:30–8:30 | Trần Vũ Luân | **Performance:** fast (< 1 ms to sign) but ~47× bigger signatures than ECDSA | `python -m mldsa_app bench -n 20` |
+| 8:30–9:30 | Đinh Thế Duy | **AI usage:** how we checked AI output, what the checks caught. **Limitations:** no PKI, no trusted timestamp, web demo keeps keys in RAM | Slides 16–19 |
 
-## Câu hỏi có thể gặp
+## Web demo steps (Đặng Thái Bình)
 
-| Câu hỏi | Gợi ý trả lời |
+| # | Do this | Result | What it proves |
+|---|---|---|---|
+| 1 | Generate key "Alice", ML-DSA-65 | 1952-byte public key | Keys are derived from a 32-byte random seed |
+| 2 | Sign "Party A transfers 100,000,000 VND to Party B." | 3309-byte signature | The signature binds file + key + context |
+| 3 | Verify | **green** | Correct signatures are accepted |
+| 4 | Click **Change 1 character** (100 → 900), verify | **red** | Integrity: the hash changes, so the challenge no longer matches |
+| 5 | Sign again, click **Flip 1 signature bit**, verify | **red** | Strong unforgeability: a real signature cannot be tweaked into another valid one |
+| 6 | Sign again, click **Change context**, verify | **red** | Domain separation: a contract signature cannot be reused as a payment signature |
+| 7 | Generate key "Mallory", sign with Mallory, verify with Alice | **red** | Authenticity: only Alice's private key works with Alice's public key |
+
+## CLI scenario (`python -m mldsa_app demo`)
+
+| Step | What happens | Meaning |
+|---|---|---|
+| 1–3 | Alice makes a key, signs the contract, Bob verifies: **VALID** | The system works |
+| 4 | Signing the same file twice gives two different signatures, both valid | Hedged signing (FIPS 204 §3.4): fresh randomness protects against side-channel and fault attacks. This is not a bug |
+| 5 | 100,000,000 → 900,000,000: **INVALID** | Integrity |
+| 6 | Flip 1 bit of the signature: **INVALID** | Strong unforgeability (SUF-CMA) |
+| 7 | Mallory signs and copies Alice's fingerprint into the file: **INVALID** | Authenticity; the metadata in the file is not trusted |
+| 8 | Reuse in context `payment/v1`: rejected, **even when the attacker rewrites the context field** | The context is inside μ, so the cryptography itself blocks it |
+| 9 | Empty file and 20 MiB file: **VALID** | Edge inputs; big files are hashed piece by piece (external μ) |
+
+## Likely questions
+
+| Question | Suggested answer |
 |---|---|
-| Vì sao ký cùng tài liệu hai lần lại ra hai chữ ký khác nhau? | Hedged signing (§3.4): rnd mới mỗi lần ký, ρ″ = H(K ‖ rnd ‖ μ). Chống fault attack. Verify vẫn chấp nhận cả hai. |
-| Rejection sampling để làm gì? | **z** = **y** + c**s₁** có thể làm lộ **s₁** nếu hệ số quá lớn. Khi đó hủy và thử lại (trung bình 5.1 lần với ML-DSA-65, theo Table 1). |
-| Tệp 1 GB thì ký thế nào? Có dùng HashML-DSA không? | Không dùng HashML-DSA. Ứng dụng tính μ theo luồng (Alg. 7 dòng 6 cho phép tính μ ở module khác) rồi gọi `sign_mu`. Kết quả vẫn là chữ ký pure chuẩn; test `test_streamed_signature_is_standard_signature` chứng minh điều này. |
-| Context string chống được gì? | Tách miền: chữ ký trên "hợp đồng" không dùng lại được làm chữ ký "thanh toán". ctx nằm trong M′ nên sửa metadata cũng vô ích. |
-| Tại sao khóa bí mật chỉ 32 byte? | Lưu seed ξ (§3.6.3, §4). Từ seed tái tạo được sk 4032 B. Seed phải được bảo vệ như khóa bí mật, nên file PEM được mã hóa bằng mật khẩu. |
-| Nếu kẻ tấn công sửa trường `algorithm` thành ML-DSA-44 thì sao? | Bộ tham số lấy từ khóa công khai. Bundle ghi sai thì bị từ chối ngay (`test_bundle_tampered_metadata`). |
-| Làm sao biết thư viện cài đúng chuẩn? | 75/75 keyGen và 90/90 sigVer khớp vector chính thức của NIST, đồng thời tương thích chéo với một implementation độc lập. |
-| ML-DSA có an toàn tuyệt đối không? | Không. An toàn dựa trên giả định MLWE/SelfTargetMSIS. Ngoài ra còn rủi ro side-channel và quản lý khóa. Vì vậy nhiều hệ thống dùng hybrid trong giai đoạn chuyển tiếp. |
+| Why does signing the same document twice give different signatures? | Hedged signing (§3.4): each signature mixes in 32 fresh random bytes. This protects against fault attacks. Verification accepts both. |
+| What is rejection sampling for? | The answer z = y + c·s₁ could leak the secret s₁ if it is too large. In that case the signer throws it away and tries again (about 5.1 tries on average for ML-DSA-65, FIPS 204 Table 1). |
+| How do you sign a 1 GB file? Do you use HashML-DSA? | No. We compute μ piece by piece (Alg. 7, line 6 allows μ to be computed in another module), then call `sign_mu`. The result is still a standard pure ML-DSA signature; the test `test_streamed_signature_is_standard_signature` proves it. |
+| What does the context string protect against? | Reuse in another purpose: a signature on a "contract" cannot be used as a "payment" signature. The context is inside M′, so editing the metadata does not help. |
+| Why is the private key only 32 bytes? | We store the seed ξ (§3.6.3, §4); the full 4032-byte key is rebuilt from it. The seed must be protected like the private key, so the PEM file is password-encrypted. |
+| What if an attacker changes the `algorithm` field to ML-DSA-44? | The parameter set comes from the public key. A mismatching field is rejected immediately (`test_bundle_tampered_metadata`). |
+| How do you know the library follows the standard? | 75/75 keyGen and 90/90 sigVer official NIST vectors match, and it interoperates with an independent implementation. |
+| Is ML-DSA perfectly secure? | No. Its security rests on the MLWE/SelfTargetMSIS assumptions, and there are still side-channel and key-management risks. That is why many systems use hybrid signatures during the transition. |

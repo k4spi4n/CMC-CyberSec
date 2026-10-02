@@ -67,9 +67,9 @@ def keygen():
     alg = request.form.get("alg", "")
     label = request.form.get("label", "").strip()
     if alg not in PARAM_SETS:
-        return _error("Bộ tham số không hợp lệ")
+        return _error("Invalid parameter set")
     if not LABEL_RE.match(label):
-        return _error("Tên khóa chỉ gồm chữ, số, '-', tối đa 32 ký tự")
+        return _error("Key name: letters, digits, '-', at most 32 characters")
     KEYRING[label] = core.generate_keypair(alg)
     return jsonify(_key_info(label, KEYRING[label]))
 
@@ -79,9 +79,9 @@ def export_private():
     key = KEYRING.get(request.form.get("label", ""))
     password = request.form.get("password", "").encode()
     if key is None:
-        return _error("Không có khóa này")
+        return _error("No such key")
     if len(password) < 8:
-        return _error("Mật khẩu tối thiểu 8 ký tự")
+        return _error("Password must be at least 8 characters")
     pem = key.private_bytes(
         serialization.Encoding.PEM,
         serialization.PrivateFormat.PKCS8,
@@ -94,7 +94,7 @@ def export_private():
 def sign():
     key = KEYRING.get(request.form.get("label", ""))
     if key is None:
-        return _error("Chọn khóa bí mật để ký")
+        return _error("Choose a private key to sign with")
     data, name = _message()
     ctx = request.form.get("context", core.DEFAULT_CONTEXT)
     try:
@@ -113,15 +113,15 @@ def verify():
         elif request.form.get("label") in KEYRING:
             pub = KEYRING[request.form["label"]].public_key()
         else:
-            return _error("Chọn khóa công khai để xác minh")
+            return _error("Choose a public key to verify with")
     except (ValueError, TypeError):
-        return _error("Khóa công khai PEM không hợp lệ hoặc không phải ML-DSA")
+        return _error("Invalid PEM public key or not an ML-DSA key")
     try:
         bundle = json.loads(request.form.get("bundle", ""))
         if not isinstance(bundle, dict):
             raise ValueError
     except ValueError:
-        return jsonify({"ok": False, "reason": "Tệp chữ ký không phải JSON hợp lệ"})
+        return jsonify({"ok": False, "reason": "Signature file is not valid JSON"})
     data, _ = _message()
     try:
         r = core.verify_file_stream(pub, io.BytesIO(data), bundle, request.form.get("context", ""))

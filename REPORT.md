@@ -67,13 +67,13 @@ Category 2 tương đương độ khó tìm va chạm SHA-256. Category 3 tươn
 
 | Thuật toán | KeyGen (ms) | Sign (ms) | Verify (ms) | pk (B) | Chữ ký (B) | Kháng lượng tử |
 |---|---|---|---|---|---|---|
-| ML-DSA-44 | 0.09 | 0.47 | 0.10 | 1312 | 2420 | Có |
-| ML-DSA-65 | 0.15 | 0.90 | 0.15 | 1952 | 3309 | Có |
-| ML-DSA-87 | 0.21 | 0.97 | 0.22 | 2592 | 4627 | Có |
-| ECDSA P-256 | 0.01 | 0.02 | 0.06 | 65 | ~70 | Không |
-| RSA-3072 PSS | 151.92 | 0.59 | 0.05 | 384 | 384 | Không |
+| ML-DSA-44 | 0.09 | 0.55 | 0.10 | 1312 | 2420 | Có |
+| ML-DSA-65 | 0.15 | 0.83 | 0.15 | 1952 | 3309 | Có |
+| ML-DSA-87 | 0.21 | 0.88 | 0.22 | 2592 | 4627 | Có |
+| ECDSA P-256 | 0.01 | 0.02 | 0.06 | 65 | ~71 | Không |
+| RSA-3072 PSS | 119.82 | 0.58 | 0.05 | 384 | 384 | Không |
 
-Nhận xét: ML-DSA nhanh (KeyGen nhanh hơn RSA khoảng 1000 lần). Cái giá phải trả là kích thước: chữ ký ML-DSA-65 lớn khoảng 47 lần chữ ký ECDSA. Đây là đánh đổi điển hình của mật mã hậu lượng tử.
+Nhận xét: ML-DSA nhanh (KeyGen nhanh hơn RSA khoảng 800 lần). Cái giá phải trả là kích thước: chữ ký ML-DSA-65 lớn khoảng 47 lần chữ ký ECDSA. Đây là đánh đổi điển hình của mật mã hậu lượng tử.
 
 ---
 

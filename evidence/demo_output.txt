@@ -1,29 +1,29 @@
 
-== 1. Alice sinh cặp khóa ML-DSA-65
-   pk = 1952 B, seed = 32 B, fingerprint e1dfb0621efc45e9...
+== 1. Alice generates an ML-DSA-65 key pair
+   pk = 1952 B, seed = 32 B, fingerprint 81b94167b98869a9...
 
-== 2. Alice ký hợp đồng
-   chữ ký = 3309 B, context = 'CMC-CyberSec/doc-sign/v1'
+== 2. Alice signs the contract
+   signature = 3309 B, context = 'CMC-CyberSec/doc-sign/v1'
 
-== 3. Bob xác minh với khóa công khai của Alice
-   Chữ ký HỢP LỆ
+== 3. Bob verifies with Alice's public key
+   Signature VALID
 
-== 4. Ký lại cùng tài liệu -> chữ ký khác (hedged signing, FIPS 204 §3.4)
-   chữ ký giống nhau? False; bản 2 hợp lệ? True
+== 4. Sign the same document again -> different signature (hedged signing, FIPS 204 §3.4)
+   signatures identical? False; second one valid? True
 
-== 5. Kẻ tấn công sửa 100.000.000 -> 900.000.000
-   Chữ ký KHÔNG hợp lệ: tệp hoặc chữ ký đã bị sửa
+== 5. Attacker changes 100,000,000 -> 900,000,000
+   Signature INVALID: file or signature was modified
 
-== 6. Lật 1 bit trong chữ ký
-   Chữ ký KHÔNG hợp lệ: tệp hoặc chữ ký đã bị sửa
+== 6. Flip 1 bit in the signature
+   Signature INVALID: file or signature was modified
 
-== 7. Mallory dùng khóa của mình ký, giả danh Alice
-   Chữ ký KHÔNG hợp lệ: tệp hoặc chữ ký đã bị sửa
+== 7. Mallory signs with their own key, pretending to be Alice
+   Signature INVALID: file or signature was modified
 
-== 8. Dùng lại chữ ký trong ngữ cảnh khác (context = 'payment/v1')
-   metadata giữ nguyên: Context string không khớp với ngữ cảnh mong đợi
-   sửa cả metadata    : Chữ ký KHÔNG hợp lệ: tệp hoặc chữ ký đã bị sửa
+== 8. Reuse the signature in another context (context = 'payment/v1')
+   metadata unchanged : Context string does not match the expected context
+   metadata rewritten : Signature INVALID: file or signature was modified
 
-== 9. Tệp rỗng và tệp 20 MiB (ký theo luồng, external mu)
-   rỗng : Chữ ký HỢP LỆ
-   20 MiB: Chữ ký HỢP LỆ (0.09 s cho ký + xác minh)
+== 9. Empty file and 20 MiB file (streaming signing, external mu)
+   empty : Signature VALID
+   20 MiB: Signature VALID (0.08 s to sign + verify)

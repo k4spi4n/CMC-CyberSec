@@ -225,34 +225,34 @@ def verify_file_stream(
     alg = param_set_of(public_key)
     try:
         if bundle.get("format") != BUNDLE_FORMAT:
-            return VerifyResult(False, "Sai định dạng tệp chữ ký", alg)
+            return VerifyResult(False, "Unknown signature file format", alg)
         if bundle.get("algorithm") != alg:
             return VerifyResult(
                 False,
-                f"Tham số không khớp: chữ ký ghi {bundle.get('algorithm')}, khóa công khai là {alg}",
+                f"Parameter set mismatch: signature says {bundle.get('algorithm')}, public key is {alg}",
                 alg,
             )
         signature = base64.b64decode(bundle["signature_b64"], validate=True)
         bundle_ctx = base64.b64decode(bundle.get("context_b64", ""), validate=True)
     except (KeyError, ValueError, TypeError):
-        return VerifyResult(False, "Tệp chữ ký bị hỏng (không giải mã được)", alg)
+        return VerifyResult(False, "Signature file is corrupted (cannot decode)", alg)
 
     expected = encode_context(expected_ctx)
     if bundle_ctx != expected:
-        return VerifyResult(False, "Context string không khớp với ngữ cảnh mong đợi", alg)
+        return VerifyResult(False, "Context string does not match the expected context", alg)
 
     expected_len = PARAM_SETS[alg].sig_bytes
     if len(signature) != expected_len:
-        return VerifyResult(False, f"Độ dài chữ ký {len(signature)} B, FIPS 204 yêu cầu {expected_len} B", alg)
+        return VerifyResult(False, f"Signature is {len(signature)} B, FIPS 204 requires {expected_len} B", alg)
 
     if not verify_stream(public_key, stream, signature, expected):
         if bundle.get("public_key_sha3_256") != fingerprint(public_key):
-            return VerifyResult(False, "Chữ ký KHÔNG hợp lệ (có thể được ký bằng khóa khác)", alg)
-        return VerifyResult(False, "Chữ ký KHÔNG hợp lệ: tệp hoặc chữ ký đã bị sửa", alg)
+            return VerifyResult(False, "Signature INVALID (possibly signed with a different key)", alg)
+        return VerifyResult(False, "Signature INVALID: file or signature was modified", alg)
 
     if bundle.get("public_key_sha3_256") != fingerprint(public_key):
-        return VerifyResult(False, "Metadata không nhất quán: dấu vân tay khóa sai", alg)
-    return VerifyResult(True, "Chữ ký HỢP LỆ", alg)
+        return VerifyResult(False, "Inconsistent metadata: wrong key fingerprint", alg)
+    return VerifyResult(True, "Signature VALID", alg)
 
 
 def verify_file(

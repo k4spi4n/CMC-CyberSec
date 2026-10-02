@@ -1,7 +1,7 @@
-Benchmark (100 lần, thông điệp 1 KiB) — thời gian trung bình ms
-Thuật toán       KeyGen     Sign   Verify   pk B  sig B  Hậu lượng tử?
-ML-DSA-44          0.09     0.50     0.10   1312   2420  Có
-ML-DSA-65          0.15     0.81     0.15   1952   3309  Có
-ML-DSA-87          0.22     0.93     0.22   2592   4627  Có
-ECDSA P-256        0.01     0.02     0.06     65     72  Không (Shor)
-RSA-3072 PSS     134.03     0.60     0.05    384    384  Không (Shor)
+Benchmark (100 runs, 1 KiB message) — mean time in ms
+Algorithm        KeyGen     Sign   Verify   pk B  sig B  Post-quantum?
+ML-DSA-44          0.09     0.55     0.10   1312   2420  Yes
+ML-DSA-65          0.15     0.83     0.15   1952   3309  Yes
+ML-DSA-87          0.21     0.88     0.22   2592   4627  Yes
+ECDSA P-256        0.01     0.02     0.06     65     71  No (Shor)
+RSA-3072 PSS     119.82     0.58     0.05    384    384  No (Shor)
